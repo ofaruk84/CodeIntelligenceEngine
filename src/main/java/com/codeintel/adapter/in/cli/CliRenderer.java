@@ -22,6 +22,14 @@ public final class CliRenderer {
                 dependencies <repository> <method-id>
                 path <repository> <source-id> <target-id>
                 impact <repository> <method-id>
+                graph <repository> <method-id>
+                  --direction callers|callees (default callers)
+                  --depth 0..100 (default 3) --max-nodes 1..10000 (default 200)
+                  --max-edges 1..50000 (default 500) --format text|dot|svg|png (default text)
+                  --output <new-path> (required for svg/png; existing files refused)
+                Graph stdout contains only text/DOT; metadata and diagnostics use stderr.
+                Graph files require an existing parent directory; paths use the working directory.
+                SVG/PNG requires Graphviz dot (PATH or CODEINTEL_DOT executable path), timeout 30s.
                 Options (anywhere before --):
                   --source-root <path> (repeatable)
                   --dependency-jar <path> (repeatable; one local JAR per flag, no separator lists)

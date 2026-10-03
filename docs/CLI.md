@@ -18,6 +18,7 @@ Prefix each command below with `java -jar target/code-intelligence.jar`.
 | `dependencies <repository> <method-id>` | Transitive dependencies and minimum distances, excluding the starting ID |
 | `path <repository> <source-id> <target-id>` | Deterministic shortest path; known disconnected endpoints produce an explicit no-path result |
 | `impact <repository> <method-id>` | Direct/indirect callers, affected methods/classes, minimum depths, maximum minimum depth, and unresolved calls originating in affected methods |
+| `graph <repository> <method-id>` | Bounded callers/callees view as console text, DOT, SVG or PNG; see [graph rendering contracts and exact examples](GRAPH_RENDERING.md) |
 
 No arguments, `help`, `--help`, or `-h` alone show help. Help and invalid command syntax never analyze. Every analysis-bearing invocation scans, parses/resolves, and builds one graph snapshot, then queries that snapshot. No persistent index is created. Cycles terminate; same known path endpoints yield one node. Graph queries accept known external targets. Unknown IDs are errors; empty search/neighbors and disconnected known paths are successful results.
 

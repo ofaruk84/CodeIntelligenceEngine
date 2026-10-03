@@ -1,5 +1,7 @@
 # In-memory call graph
 
+The subsequent graph rendering feature reuses these contracts and one shared BFS implementation for bounded selection. See [GRAPH_RENDERING.md](GRAPH_RENDERING.md) for induced-edge semantics and rendering/output adapters.
+
 This document records the stage's design and historical verification. Later-stage/deferred statements describe that stage's original scope; consult [CLI.md](CLI.md), [APPLICATION_API.md](APPLICATION_API.md), and [VERIFICATION.md](VERIFICATION.md) for current behavior and final acceptance.
 
 Stage 7 implements the Java-only `CodeGraph`, `GraphEdge`, and `GraphTraversal` contracts and the collections-based `InMemoryCodeGraph` adapter. No application query services or CLI are included.

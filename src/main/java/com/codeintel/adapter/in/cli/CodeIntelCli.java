@@ -16,7 +16,7 @@ public final class CodeIntelCli {
         if (arguments.command().equals("help")) { CliRenderer.help(out); return 0; }
         try {
             var snapshot = analysis.analyze(arguments.repository(), arguments.options());
-            var renderer = new CliRenderer(out, err);
+            var renderer = new CliRenderer(arguments.command().equals("graph") ? err : out, err);
             renderer.summary(snapshot);
             renderer.coverage(snapshot.coverage(), arguments.detailedDiagnostics());
             if (arguments.diagnosticsFile() != null) {
@@ -24,6 +24,21 @@ public final class CodeIntelCli {
                 catch (IOException | SecurityException failure) {
                     err.println("Cannot save diagnostics: " + failure.getMessage()); return 3;
                 }
+            }
+            if (arguments.command().equals("graph")) {
+                var graph = arguments.graph();
+                var view = new CodeIntelligenceService(snapshot).graphView(arguments.operands().getFirst(), graph.selection());
+                if (graph.output() == null) {
+                    out.print(graph.format().equals("dot")
+                            ? com.codeintel.adapter.out.rendering.GraphRenderer.dot(view)
+                            : com.codeintel.adapter.out.rendering.GraphRenderer.text(view));
+                } else {
+                    try { new com.codeintel.adapter.out.rendering.GraphOutputWriter().write(view, graph.format(), graph.output()); }
+                    catch (IOException | SecurityException failure) { err.println("Cannot save graph: " + failure.getMessage()); return 3; }
+                    err.println("Graph saved: " + graph.output().toAbsolutePath().normalize());
+                }
+                err.println(com.codeintel.adapter.out.rendering.GraphRenderer.metadata(view));
+                return snapshot.coverage().partialScan() || !snapshot.coverage().partialSources().isEmpty() ? 5 : 0;
             }
             boolean found = renderer.query(arguments, new CodeIntelligenceService(snapshot), snapshot);
             if (!found) return 4;

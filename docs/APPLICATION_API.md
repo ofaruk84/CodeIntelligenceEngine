@@ -1,5 +1,7 @@
 # Application API
 
+`CodeIntelligenceService.graphView(exactId, GraphViewOptions)` returns an immutable bounded view containing the target, BFS minimum distances, original induced caller-to-callee edges, external IDs and separate truncation flags. `GraphViewOptions.defaults()` selects callers at depth 3 with 200 nodes and 500 edges. Selection is presentation-independent; see [GRAPH_RENDERING.md](GRAPH_RENDERING.md) for limits and edge semantics.
+
 The application uses scanner, source-analyzer and graph-factory ports to keep concrete adapters outside orchestration. See [CLI.md](CLI.md) for executable usage and [VERIFICATION.md](VERIFICATION.md) for current acceptance evidence.
 
 ## Composition and use

@@ -6,6 +6,7 @@ Local Java source analysis engine with a thin CLI and executable JAR. See [CLI u
 
 - JDK 21 (Maven must run with Java 21)
 - Apache Maven 3.9 or newer
+- Graphviz `dot` for SVG/PNG rendering (text/DOT needs no additional dependency)
 
 From the project directory:
 
@@ -45,6 +46,13 @@ JavaParser types belong in the parser adapter and do not leak into domain or app
 
 ## Current acceptance
 
-Stage 10 usage documentation and final verification completed on 2026-10-04. See [current verification and limitations](docs/VERIFICATION.md) for test totals, packaged checks and source-derived acceptance answers. The graph exposes structured queries; DOT export and graph rendering are not implemented.
+Stage 10 usage documentation and final verification completed on 2026-10-04. See [current verification and limitations](docs/VERIFICATION.md) for test totals, packaged checks and source-derived acceptance answers. The `graph` command renders a bounded callable graph to console text, DOT, SVG, or PNG; see [graph options, examples and Graphviz setup](docs/GRAPH_RENDERING.md).
+
+```powershell
+java -jar target/code-intelligence.jar graph src/test/resources/fixtures/commerce 'com.example.commerce.CycleA#run()' --direction callees --depth 3
+java -jar target/code-intelligence.jar graph src/test/resources/fixtures/commerce 'com.example.commerce.CycleA#run()' --format dot
+```
+
+Graph defaults: callers, depth 3, 200 nodes, 500 edges, console text. Use `--format svg --output <new-path>` for a rendered file with an existing parent directory; overwrite is refused. Graphviz 16.1.0 is installed on this Windows machine; text/DOT remains usable without it. Graph metadata and resolution diagnostics use stderr so DOT stdout remains machine-readable.
 
 The build commands above work in PowerShell and POSIX shells. Check the Java version reported by Maven as well as by the Java launcher. For compilation alone use `mvn compile`; for unit tests use `mvn test`; for packaging use `mvn package`; for complete acceptance including executable-JAR integration tests use `mvn clean verify`.

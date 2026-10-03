@@ -34,6 +34,23 @@ public final class CodeIntelligenceService {
         return Optional.ofNullable(snapshot.methods().get(Objects.requireNonNull(id)));
     }
     public List<MethodId> findCallers(String id) { return sorted(snapshot.graph().callers(known(id))); }
+    public GraphView graphView(String id, GraphViewOptions options) {
+        var target = known(id);
+        var selection = traversal.select(target, options.direction(), options.depth(), options.maxNodes());
+        var edges = new ArrayList<com.codeintel.domain.graph.GraphEdge>();
+        boolean edgeLimited = false;
+        outer: for (var caller : sorted(selection.distances().keySet())) {
+            for (var callee : sorted(snapshot.graph().callees(caller))) {
+                if (!selection.distances().containsKey(callee)) continue;
+                if (edges.size() == options.maxEdges()) { edgeLimited = true; break outer; }
+                edges.add(new com.codeintel.domain.graph.GraphEdge(caller, callee));
+            }
+        }
+        var external = new HashSet<MethodId>();
+        selection.distances().keySet().stream().filter(node -> !snapshot.methods().containsKey(node.value())).forEach(external::add);
+        return new GraphView(target, options, selection.distances(), edges, external,
+                selection.depthLimited(), selection.nodeLimited(), edgeLimited);
+    }
     public List<MethodId> findCallees(String id) { return sorted(snapshot.graph().callees(known(id))); }
     public DependencyResult findDependencies(String id) {
         var target = known(id);
