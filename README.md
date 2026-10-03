@@ -1,6 +1,6 @@
 # Java Code Intelligence Engine
 
-Local Java source analysis engine. Build setup, immutable domain models, deterministic repository scanning, layout-based source-root discovery, AST extraction, static symbol resolution, and the immutable indexed call graph with BFS traversal are complete. See [scanner contracts and limitations](docs/SCANNING.md), [extraction coverage and recovery policy](docs/AST_EXTRACTION.md), [symbol resolution and coverage limits](docs/SYMBOL_RESOLUTION.md), and [graph contracts and traversal semantics](docs/GRAPH.md). Application query services are implemented; see [API examples and coverage semantics](docs/APPLICATION_API.md). The CLI remains planned in [the roadmap](docs/ROADMAP.md).
+Local Java source analysis engine with a thin CLI and executable JAR. See [CLI usage and outcomes](docs/CLI.md), [scanner contracts and limitations](docs/SCANNING.md), [extraction coverage and recovery policy](docs/AST_EXTRACTION.md), [symbol resolution and coverage limits](docs/SYMBOL_RESOLUTION.md), [graph contracts](docs/GRAPH.md), and [application API](docs/APPLICATION_API.md).
 
 ## Requirements and build
 
@@ -20,7 +20,16 @@ The build pins JavaParser/Symbol Solver 3.28.2 and JUnit Jupiter 5.14.4, compile
 
 Maven downloads the engine's own build dependencies on the first build. Analyzed repositories will not have their builds executed or dependencies downloaded automatically.
 
-The build produces `target/code-intelligence.jar`. It is currently a library scaffold, not an executable CLI or a bundled distribution.
+The build produces `target/code-intelligence.jar`, bundling runtime dependencies with `com.codeintel.bootstrap.Main` as its entry point. Run it with Java 21; no extra classpath or IDE is needed. `mvn test` runs adapter/service/domain tests; `mvn verify` also runs fresh-process JAR tests after packaging.
+
+```powershell
+java -jar target/code-intelligence.jar --help
+java -jar target/code-intelligence.jar scan src/test/resources/fixtures/commerce
+java -jar target/code-intelligence.jar search src/test/resources/fixtures/commerce '#pay('
+java -jar target/code-intelligence.jar impact src/test/resources/fixtures/commerce 'com.example.commerce.CycleA#run()'
+```
+
+Use the exact IDs returned by `search`, including fallback location qualifiers. Each invocation analyzes once in memory. See [all commands, quoting, exit codes, and verification](docs/CLI.md).
 
 ## Package boundaries
 
@@ -30,4 +39,4 @@ The build produces `target/code-intelligence.jar`. It is currently a library sca
 - `adapter.in.cli`: command-line presentation.
 - `bootstrap`: composition root.
 
-Package documentation establishes the boundaries; production engine classes are added in subsequent roadmap stages. JavaParser types belong in the parser adapter and must not leak into domain or application APIs.
+JavaParser types belong in the parser adapter and do not leak into domain or application APIs. `EngineFactory` wires concrete outgoing adapters; `Main` delegates to the CLI. The CLI parses, invokes existing services, and renders results.

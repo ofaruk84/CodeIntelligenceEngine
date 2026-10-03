@@ -2,7 +2,7 @@
 
 ## Status and inspection
 
-The original planning inspection on 2026-09-25 found an empty `C:\dev\LegacyCodebaseInspector`. The saved project is now `C:\dev\CodebaseInspector`. The user subsequently authorized build setup and stages 2 through 7 implementation. The Maven scaffold, immutable domain models, deterministic scanner, layout-based source-root discovery, first-pass AST extraction, reusable synthetic fixture coverage, second-pass static symbol resolution, and the immutable indexed call graph with BFS traversal are implemented. See [GRAPH.md](GRAPH.md) for stage 7 contracts and verification. See [SYMBOL_RESOLUTION.md](SYMBOL_RESOLUTION.md), [FIXTURES.md](FIXTURES.md), [AST_EXTRACTION.md](AST_EXTRACTION.md), [DOMAIN_MODEL.md](DOMAIN_MODEL.md) and [SCANNING.md](SCANNING.md) for decisions and verification. Application orchestration and query services are also implemented; see [APPLICATION_API.md](APPLICATION_API.md). Explicit stage 8 authorization supersedes the planning-only wording in `AGENTS.md` for this scope; later stages still require authorization.
+The original planning inspection on 2026-09-25 found an empty `C:\dev\LegacyCodebaseInspector`. The saved project is now `C:\dev\CodebaseInspector`. The user subsequently authorized build setup and stages 2 through 7 implementation. The Maven scaffold, immutable domain models, deterministic scanner, layout-based source-root discovery, first-pass AST extraction, reusable synthetic fixture coverage, second-pass static symbol resolution, and the immutable indexed call graph with BFS traversal are implemented. See [GRAPH.md](GRAPH.md) for stage 7 contracts and verification. See [SYMBOL_RESOLUTION.md](SYMBOL_RESOLUTION.md), [FIXTURES.md](FIXTURES.md), [AST_EXTRACTION.md](AST_EXTRACTION.md), [DOMAIN_MODEL.md](DOMAIN_MODEL.md) and [SCANNING.md](SCANNING.md) for decisions and verification. Application orchestration and query services are also implemented; see [APPLICATION_API.md](APPLICATION_API.md). Stages 8 and 9 were explicitly authorized and completed. The thin CLI and executable JAR are implemented; see [CLI.md](CLI.md). These authorizations supersede planning-only wording in `AGENTS.md` for their scopes; remaining work still requires authorization.
 
 ## Product and scope
 
@@ -12,7 +12,7 @@ Technology: Java 21, one Maven module, JavaParser, JavaParser Symbol Solver, and
 
 ## Proposed exact module and package structure
 
-The following is the intended complete MVP structure. Build setup, package documentation, domain models, the scanner port/result, filesystem adapters, and their tests currently exist. The Maven artifact is `com.codeintel:code-intelligence`; `target/code-intelligence.jar` is currently a library and will become executable in the CLI stage.
+The following is the intended complete MVP structure. Build setup, package documentation, domain models, the scanner port/result, filesystem adapters, and their tests currently exist. The Maven artifact is `com.codeintel:code-intelligence`; `target/code-intelligence.jar` is an executable Java 21 distribution with bundled runtime dependencies.
 
 ```text
 CodebaseInspector/
@@ -175,7 +175,7 @@ Include overloaded methods, same-class calls, calls through fields and construct
 
 ## Implementation sequence and checkpoints
 
-Stages 1 through 8 were explicitly authorized and implemented. Stage 8 authorization supersedes the planning-only restriction for application orchestration and query services. See [APPLICATION_API.md](APPLICATION_API.md) for contracts, examples, coverage scopes and verification. Later stages start only after an explicit user request. Each meaningful stage includes compilation, relevant tests, fixes, and a short progress report. Stage 6 infers fallback roots from parsed packages when directory segments agree.
+Stages 1 through 9 were explicitly authorized and implemented. Stage 8 authorization supersedes the planning-only restriction for application orchestration and query services. See [APPLICATION_API.md](APPLICATION_API.md) for contracts, examples, coverage scopes and verification. Later stages start only after an explicit user request. Each meaningful stage includes compilation, relevant tests, fixes, and a short progress report. Stage 6 infers fallback roots from parsed packages when directory segments agree.
 
 1. Set up Java 21, Maven, pinned JavaParser/Symbol Solver and JUnit 5 dependencies, compiler/test plugins, and the agreed package boundaries. Verify an initial clean build.
 2. Implement immutable domain values and callable identity mapping rules, covering overloads, constructor identity, nested classes, unresolved fallback types, and collision diagnostics.
@@ -185,7 +185,7 @@ Stages 1 through 8 were explicitly authorized and implemented. Stage 8 authoriza
 6. Implement second-pass symbol resolution. Test project calls, overloads, same-class calls, dependency fields, constructors, unresolved calls, and identity consistency. Preserve evidence and failure details.
 7. Implement the in-memory graph, deduplicated forward/reverse indexes, and BFS traversals. Test repeated call sites versus unique edges, self-loops, cycles, external targets, shortest paths, and minimum distances.
 8. Implement analysis orchestration and all query APIs. Test structured impact output, direct/indirect classification, target exclusion, affected classes, unknown IDs, deterministic output, and coverage limitations.
-9. Implement the thin CLI and executable JAR packaging. Test all commands against real parsed fixtures, error handling, and one analysis per invocation; smoke-test the packaged JAR.
+9. Implement the thin CLI and executable JAR packaging. Test all commands against real parsed fixtures, error handling, and one analysis per invocation; smoke-test the packaged JAR. Completed with explicit stage 9 authorization on 2026-10-03; see [CLI usage, outcomes and verification](CLI.md). This authorization supersedes planning-only wording for this stage.
 10. Write usage/API documentation, architecture and identity explanations, coverage limits, and extension notes. Run the full Maven verification and packaged CLI acceptance checks; fix failures before declaring completion.
 
 ## Assumptions and deferred capabilities
