@@ -129,4 +129,26 @@ class RepositoryScannerTest {
             Files.setPosixFilePermissions(blocked, permissions);
         }
     }
+    @Test void mixedLayoutsCombineStandardAndExplicitRootsWithoutDroppingLooseSources() throws IOException {
+        source("module/src/main/java/example/Main.java");
+        source("module/src/test/java/example/MainTest.java");
+        source("generated/example/Generated.java");
+        source("legacy/deep/Loose.java");
+        var discovered = scanner.scan(repository);
+        assertFalse(discovered.partial());
+        assertEquals(List.of("generated/example/Generated.java", "legacy/deep/Loose.java"), strings(discovered.diagnostics().stream().map(RepositorySources.Diagnostic::path).toList()));
+        assertTrue(discovered.diagnostics().stream().allMatch(d -> d.code().equals("SOURCE_ROOT_UNCERTAIN") && !d.message().isBlank()));
+        var explicit = scanner.scan(repository, List.of(Path.of("generated")));
+        assertEquals(discovered.files(), explicit.files());
+        assertEquals(List.of("generated", "module/src/main/java", "module/src/test/java"), strings(explicit.sourceRoots()));
+        assertEquals(List.of(Path.of("legacy/deep/Loose.java")), explicit.diagnostics().stream().map(RepositorySources.Diagnostic::path).toList());
+        assertFalse(explicit.partial());
+    }
+    @Test void emptyRepositoryIsACompleteEmptyScan() throws IOException {
+        var result = scanner.scan(repository);
+        assertTrue(result.files().isEmpty());
+        assertTrue(result.sourceRoots().isEmpty());
+        assertTrue(result.diagnostics().isEmpty());
+        assertFalse(result.partial());
+    }
 }
