@@ -1,6 +1,6 @@
 # CLI usage and contracts
 
-Stage 9 was explicitly authorized on 2026-10-03, superseding the older planning restriction for CLI, packaging, tests, and associated documentation. No application or domain production code changed.
+These contracts describe the current implementation. See [VERIFICATION.md](VERIFICATION.md) for the latest full build and acceptance evidence. Historical stage verification below records earlier checks.
 
 Build with JDK 21 and Maven 3.9 or newer: `mvn clean verify`. Run `java -jar target/code-intelligence.jar --help`. Maven Shade bundles runtime dependencies and supplies the manifest entry point. Failsafe runs `ExecutableJarIT` after packaging. The distribution uses the ordinary classpath, not Java's module path.
 
@@ -120,3 +120,31 @@ On 2026-10-03, offline `mvn -o clean verify` passed, followed by final `mvn -o v
 Read-only scan and `search ... 'Service'` smoke tests against the available vet-clinic repository both exited 0. Both retained exactly 100 scanned/parsed files, 0 failed, 100 types, 285 callables, 1,477 call sites, 914 resolved, 563 unresolved, 0 ambiguous, 67 external targets, and 2 calls without caller. No dependency JARs were supplied, so no resolution improvement is claimed. Default stderr was 11 lines / 1,877 UTF-8 bytes for each command; the old PowerShell redirected log was 821,114 bytes (different shell formatting/encoding). The new export contains 2,042 valid JSON objects including all 1,477 calls and 563 source diagnostics. The original user log's SHA-256 was unchanged. New smoke artifacts are under `target/real-repository-smoke/`; they are build-local outputs, not committed third-party fixtures.
 
 Additional packaged checks confirmed the synthetic dependency call changes from 0 resolved / 1 unresolved to 1 resolved / 0 unresolved with an explicitly supplied JAR. Real-repository detailed mode exited 0 and contained exactly 563 failed-call examples; the final UTF-8 export parsed successfully.
+
+## Required inputs and shell examples
+
+Every command requires a repository; only `scan` has no query operand. `search` requires a query token (an empty string is allowed); lookup and graph commands require complete nonblank IDs. All four options are optional. There is no DOT export, graph-rendering command, or generic `--verbose` flag. Use `--detailed-diagnostics` for complete diagnostic evidence and JUL configuration for operational logging.
+
+Standard `src/main/java` and `src/test/java` roots are discovered across submodules. All eligible Java files are scanned, including nonstandard layouts; the parser can infer fallback roots when AST package declarations match directory segments. Root uncertainty remains visible as a diagnostic. See [scanner discovery](SCANNING.md) and [solver root inference](SYMBOL_RESOLUTION.md).
+
+PowerShell:
+
+```powershell
+$repo = 'src/test/resources/fixtures/commerce'
+java -jar target/code-intelligence.jar scan $repo
+java -jar target/code-intelligence.jar search $repo '#pay('
+java -jar target/code-intelligence.jar impact $repo 'com.example.commerce.CycleA#run()'
+$LASTEXITCODE
+```
+
+POSIX:
+
+```sh
+repo='src/test/resources/fixtures/commerce'
+java -jar target/code-intelligence.jar scan "$repo"
+java -jar target/code-intelligence.jar search "$repo" '#pay('
+java -jar target/code-intelligence.jar path "$repo" 'com.example.commerce.CycleA#run()' 'com.example.commerce.CycleC#run()'
+printf 'Exit: %s\n' "$?"
+```
+
+These quoting examples protect exact IDs in both shells. Windows PowerShell 5.1 legacy native argument passing may drop an empty quoted argument; use PowerShell 7.3+ standard argument passing or the Java API to list all symbols with an empty search. POSIX execution was not available on the verification host.

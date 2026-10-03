@@ -1,30 +1,42 @@
-# Application API (stage 8)
+# Application API
 
-Stage 8 is implemented with explicit user authorization. The application uses the scanner and analyzer ports and a new `CodeGraphFactory` construction port. This small boundary keeps the concrete graph adapter outside orchestration. The existing domain graph contract and BFS algorithms remain unchanged. No CLI or executable packaging is included.
+The application uses scanner, source-analyzer and graph-factory ports to keep concrete adapters outside orchestration. See [CLI.md](CLI.md) for executable usage and [VERIFICATION.md](VERIFICATION.md) for current acceptance evidence.
 
 ## Composition and use
 
-Concrete adapters are wired by callers outside the application layer:
+The composition root wires adapters outside the application layer. This complete example uses verified fixture IDs and reuses one snapshot for every query:
 
 ```java
-var analysis = new RepositoryAnalysisService(
-    new FileSystemRepositoryScanner(),
-    new JavaParserSourceAnalyzer(),
-    InMemoryCodeGraph::fromSources);
-var snapshot = analysis.analyze(repositoryPath, AnalysisOptions.defaults());
-var queries = new CodeIntelligenceService(snapshot);
-var symbols = queries.searchSymbol("PaymentService");
-var definition = queries.getMethod("com.example.commerce.PaymentService#pay(java.lang.String)");
-definition.ifPresent(method -> {
-    var callers = queries.findCallers(method.id().value());
-    var callees = queries.findCallees(method.id().value());
-    var dependencies = queries.findDependencies(method.id().value());
-    var path = queries.findPath(callers.getFirst().value(), method.id().value());
-    var impact = queries.analyzeChangeImpact(method.id().value());
-});
+import com.codeintel.bootstrap.EngineFactory;
+import com.codeintel.application.service.AnalysisOptions;
+import com.codeintel.application.service.CodeIntelligenceService;
+import java.nio.file.Path;
+
+public class ApiExample {
+    public static void main(String[] args) throws Exception {
+        var snapshot = EngineFactory.create().analyze(
+                Path.of("src/test/resources/fixtures/commerce"), AnalysisOptions.defaults());
+        var queries = new CodeIntelligenceService(snapshot);
+        String target = "com.example.commerce.CycleA#run()";
+        var symbols = queries.searchSymbol("Cycle");
+        var definition = queries.getMethod(target); // Optional<MethodNode>
+        var callers = queries.findCallers(target); // List<MethodId>: CycleC#run()
+        var callees = queries.findCallees(target); // List<MethodId>: CycleB#run()
+        var dependencies = queries.findDependencies(target); // B: 1, C: 2
+        var path = queries.findPath(target, "com.example.commerce.CycleC#run()");
+        var impact = queries.analyzeChangeImpact(target); // C: 1, B: 2; excludes A
+        var coverage = impact.coverage(); // snapshot-wide evidence
+        var scopedFailures = impact.unresolvedCallsInAffectedMethods(); // empty here
+        System.out.println(path.path()); // Optional containing A -> B -> C
+    }
+}
 ```
 
-The example assumes a known caller exists before accessing `getFirst`. Additional source roots are passed in an immutable `AnalysisOptions` list. Scanning errors for invalid repositories propagate as `IOException`; individual scan and analysis failures remain in the snapshot. One analysis request scans, analyzes and constructs the indexed graph once. Queries use the same graph and immutable definition indexes without scanning, parsing or graph rebuilding. Graph factories must return immutable indexed graphs; the supplied in-memory adapter satisfies this contract.
+Run from the project directory with the packaged JAR on the classpath: `javac -cp target/code-intelligence.jar ApiExample.java`, then `java -cp 'target/code-intelligence.jar;.' ApiExample` in PowerShell. POSIX uses `java -cp 'target/code-intelligence.jar:.' ApiExample`.
+
+Repository is required. Optional roots and local dependency metadata use `new AnalysisOptions(List.of(Path.of("custom/java")), List.of(Path.of("/local/dependency.jar")))` with `java.util.List` imported. Both lists may be empty. Relative roots use the repository; relative JARs use the working directory. Invalid repositories propagate `IOException`; individual scan/analysis failures remain in the snapshot. Graph factories must return immutable indexed graphs. One analysis request scans, analyzes and constructs the graph once; subsequent queries reuse its immutable indexes.
+
+For arbitrary repositories, discover exact IDs with `searchSymbol` and inspect the returned kind rather than assuming a signature. The commerce String payment overload is `com.example.commerce.PaymentService#pay(unresolved:6:String)@54:src/main/java/com/example/commerce/PaymentService.java:6:5-6:55`. Reference parameters retain first-pass AST spellings and declaration qualifiers even when second-pass calls resolve successfully. This identity fallback is separate from a call's `UNRESOLVED` status. See [identity rules](DOMAIN_MODEL.md) and [target mapping](SYMBOL_RESOLUTION.md).
 
 ## Query semantics
 

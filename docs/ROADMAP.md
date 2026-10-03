@@ -1,5 +1,9 @@
 # Java Code Intelligence Engine: requirements and roadmap
 
+## Current completion
+
+Stage 10 was explicitly authorized and completed on 2026-10-04. All ten MVP stages are implemented/documented and the six acceptance questions pass from parsed synthetic sources. See [VERIFICATION.md](VERIFICATION.md) for current Java/Maven versions, full verification totals, packaged checks, platform skips and coverage limits. Stage 10 required documentation corrections only. Older planning restrictions are superseded for this authorized scope; deferred features still require explicit scope expansion. The structure below is the original proposal; actual adapter decomposition is explained in the stage documents.
+
 ## Status and inspection
 
 The original planning inspection on 2026-09-25 found an empty `C:\dev\LegacyCodebaseInspector`. The saved project is now `C:\dev\CodebaseInspector`. The user subsequently authorized build setup and stages 2 through 7 implementation. The Maven scaffold, immutable domain models, deterministic scanner, layout-based source-root discovery, first-pass AST extraction, reusable synthetic fixture coverage, second-pass static symbol resolution, and the immutable indexed call graph with BFS traversal are implemented. See [GRAPH.md](GRAPH.md) for stage 7 contracts and verification. See [SYMBOL_RESOLUTION.md](SYMBOL_RESOLUTION.md), [FIXTURES.md](FIXTURES.md), [AST_EXTRACTION.md](AST_EXTRACTION.md), [DOMAIN_MODEL.md](DOMAIN_MODEL.md) and [SCANNING.md](SCANNING.md) for decisions and verification. Application orchestration and query services are also implemented; see [APPLICATION_API.md](APPLICATION_API.md). Stages 8 and 9 were explicitly authorized and completed. The thin CLI and executable JAR are implemented; see [CLI.md](CLI.md). These authorizations supersede planning-only wording in `AGENTS.md` for their scopes; remaining work still requires authorization.
@@ -158,7 +162,7 @@ Incomplete-resolution reporting must not claim that unresolved calls are proven 
 
 ## CLI and fixture behavior
 
-Planned commands: `scan`, `search`, `method`, `callers`, `callees`, `dependencies`, `path`, and `impact`, each accepting a repository path and appropriate query arguments. Allow repeatable explicit source-root options. Document shell quoting of complete method IDs. Summaries show scanned/parsed/failed files, type and callable counts, call-site counts, resolution status counts, and diagnostics. Keep summaries and query results separate from error reporting and document exit-code behavior.
+Implemented commands: `scan`, `search`, `method`, `callers`, `callees`, `dependencies`, `path`, and `impact`, each accepting a repository path and appropriate query arguments. Allow repeatable explicit source-root options. Document shell quoting of complete method IDs. Summaries show scanned/parsed/failed files, type and callable counts, call-site counts, resolution status counts, and diagnostics. Keep summaries and query results separate from error reporting and document exit-code behavior.
 
 The commerce fixture must derive these relationships from source:
 
@@ -175,7 +179,7 @@ Include overloaded methods, same-class calls, calls through fields and construct
 
 ## Implementation sequence and checkpoints
 
-Stages 1 through 9 were explicitly authorized and implemented. Stage 8 authorization supersedes the planning-only restriction for application orchestration and query services. See [APPLICATION_API.md](APPLICATION_API.md) for contracts, examples, coverage scopes and verification. Later stages start only after an explicit user request. Each meaningful stage includes compilation, relevant tests, fixes, and a short progress report. Stage 6 infers fallback roots from parsed packages when directory segments agree.
+Stages 1 through 10 were explicitly authorized and completed. Stage 8 authorization supersedes the planning-only restriction for application orchestration and query services. See [APPLICATION_API.md](APPLICATION_API.md) for contracts, examples, coverage scopes and verification. Later stages start only after an explicit user request. Each meaningful stage includes compilation, relevant tests, fixes, and a short progress report. Stage 6 infers fallback roots from parsed packages when directory segments agree.
 
 1. Set up Java 21, Maven, pinned JavaParser/Symbol Solver and JUnit 5 dependencies, compiler/test plugins, and the agreed package boundaries. Verify an initial clean build.
 2. Implement immutable domain values and callable identity mapping rules, covering overloads, constructor identity, nested classes, unresolved fallback types, and collision diagnostics.
@@ -186,7 +190,7 @@ Stages 1 through 9 were explicitly authorized and implemented. Stage 8 authoriza
 7. Implement the in-memory graph, deduplicated forward/reverse indexes, and BFS traversals. Test repeated call sites versus unique edges, self-loops, cycles, external targets, shortest paths, and minimum distances.
 8. Implement analysis orchestration and all query APIs. Test structured impact output, direct/indirect classification, target exclusion, affected classes, unknown IDs, deterministic output, and coverage limitations.
 9. Implement the thin CLI and executable JAR packaging. Test all commands against real parsed fixtures, error handling, and one analysis per invocation; smoke-test the packaged JAR. Completed with explicit stage 9 authorization on 2026-10-03; see [CLI usage, outcomes and verification](CLI.md). This authorization supersedes planning-only wording for this stage.
-10. Write usage/API documentation, architecture and identity explanations, coverage limits, and extension notes. Run the full Maven verification and packaged CLI acceptance checks; fix failures before declaring completion.
+10. Completed 2026-10-04: aligned usage/API documentation, identity explanations, coverage limits and extension notes; full clean Maven verification and packaged CLI acceptance checks passed. See VERIFICATION.md for evidence and unverified platform branches.
 
 ## Assumptions and deferred capabilities
 

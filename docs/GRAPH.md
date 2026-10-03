@@ -1,5 +1,7 @@
 # In-memory call graph
 
+This document records the stage's design and historical verification. Later-stage/deferred statements describe that stage's original scope; consult [CLI.md](CLI.md), [APPLICATION_API.md](APPLICATION_API.md), and [VERIFICATION.md](VERIFICATION.md) for current behavior and final acceptance.
+
 Stage 7 implements the Java-only `CodeGraph`, `GraphEdge`, and `GraphTraversal` contracts and the collections-based `InMemoryCodeGraph` adapter. No application query services or CLI are included.
 
 Construct a snapshot with `InMemoryCodeGraph.fromSources(sourceUnits)`, or pass callable definitions and call sites directly to its constructor. The adapter consumes domain values only and reuses exact `MethodId` objects: overloads, constructors, nested types, and location-qualified fallback identities are not remapped.

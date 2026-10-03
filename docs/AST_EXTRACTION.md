@@ -1,5 +1,7 @@
 # Stage 4 AST extraction
 
+This document records the stage's design and historical verification. Later-stage/deferred statements describe that stage's original scope; consult [CLI.md](CLI.md), [APPLICATION_API.md](APPLICATION_API.md), and [VERIFICATION.md](VERIFICATION.md) for current behavior and final acceptance.
+
 `SourceAnalyzer` accepts the existing `RepositorySources` and returns immutable `SourceUnit` values in input file order. `JavaParserSourceAnalyzer` reads UTF-8 source locally; its `parse(path, source)` entry point also supports in-memory input. The scanner remains responsible for discovery. Callers retain scan diagnostics and the scan partial flag alongside these per-file results; this stage does not introduce snapshot orchestration.
 
 ## Architecture and coverage

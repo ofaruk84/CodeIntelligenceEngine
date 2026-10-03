@@ -1,5 +1,7 @@
 # Stage 6 symbol resolution
 
+This document records the stage's design and historical verification. Later-stage/deferred statements describe that stage's original scope; consult [CLI.md](CLI.md), [APPLICATION_API.md](APPLICATION_API.md), and [VERIFICATION.md](VERIFICATION.md) for current behavior and final acceptance.
+
 `JavaParserSourceAnalyzer.analyze(RepositorySources)` now collects all definitions before resolving calls. It retains successfully extracted compilation units privately, attaches the configured solver, and returns immutable `SourceUnit` values in scanner order. Original ASTs are reused for extraction and call resolution; JavaParserTypeSolver may independently parse source declarations for its own source lookup cache. `parse(path, source)` remains an extraction-only convenience and reports `NOT_ATTEMPTED` calls because it has no repository/source-root context. No parser types cross the application port.
 
 ## Solver configuration

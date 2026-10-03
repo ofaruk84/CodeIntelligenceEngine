@@ -16,7 +16,7 @@ mvn -version
 mvn clean verify
 ```
 
-The build pins JavaParser/Symbol Solver 3.28.2 and JUnit Jupiter 5.14.4, compiles with Java release 21, and runs JUnit 5 tests with Surefire. Symbol Solver brings in the matching JavaParser core dependency. Initial verification tests parse Java 21 record patterns, resolve JDK methods, and resolve calls across synthetic local source files.
+The build pins JavaParser/Symbol Solver 3.28.2 and JUnit Jupiter 5.14.4, compiles with Java release 21, and runs JUnit 5 tests with Surefire. Symbol Solver brings in the matching JavaParser core dependency. Verification tests parse Java 21 record patterns, resolve JDK methods, and resolve calls across synthetic local source files.
 
 Maven downloads the engine's own build dependencies on the first build. Analyzed repositories will not have their builds executed or dependencies downloaded automatically.
 
@@ -40,3 +40,9 @@ Use the exact IDs returned by `search`, including fallback location qualifiers. 
 - `bootstrap`: composition root.
 
 JavaParser types belong in the parser adapter and do not leak into domain or application APIs. `EngineFactory` wires concrete outgoing adapters; `Main` delegates to the CLI. The CLI parses, invokes existing services, and renders results.
+
+## Current acceptance
+
+Stage 10 usage documentation and final verification completed on 2026-10-04. See [current verification and limitations](docs/VERIFICATION.md) for test totals, packaged checks and source-derived acceptance answers. The graph exposes structured queries; DOT export and graph rendering are not implemented.
+
+The build commands above work in PowerShell and POSIX shells. Check the Java version reported by Maven as well as by the Java launcher. For compilation alone use `mvn compile`; for unit tests use `mvn test`; for packaging use `mvn package`; for complete acceptance including executable-JAR integration tests use `mvn clean verify`.

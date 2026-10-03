@@ -1,5 +1,7 @@
 # Stage 5 fixture and behavioral coverage
 
+This document records the stage's design and historical verification. Later-stage/deferred statements describe that stage's original scope; consult [CLI.md](CLI.md), [APPLICATION_API.md](APPLICATION_API.md), and [VERIFICATION.md](VERIFICATION.md) for current behavior and final acceptance.
+
 Stage 5 implementation was explicitly authorized on 2026-10-03. No production code or build configuration changes were needed. Stage 4 extraction was complete before this work began.
 
 See [fixture layout and source relationships](../src/test/resources/fixtures/README.md). Sixteen Java resource files cover commerce main/test roots, two modules, and isolated malformed syntax. These input files remain outside Maven compilation roots.

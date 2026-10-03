@@ -1,5 +1,7 @@
 # Stage 3 repository scanning
 
+This document records the stage's design and historical verification. Later-stage/deferred statements describe that stage's original scope; consult [CLI.md](CLI.md), [APPLICATION_API.md](APPLICATION_API.md), and [VERIFICATION.md](VERIFICATION.md) for current behavior and final acceptance.
+
 Stage 3 was explicitly authorized on 2026-10-03. Later implementation stages still require a user request.
 
 ## Contract and boundaries

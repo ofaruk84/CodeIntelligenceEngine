@@ -1,5 +1,7 @@
 # Stage 2 domain model contract
 
+This document records the stage's design and historical verification. Later-stage/deferred statements describe that stage's original scope; consult [CLI.md](CLI.md), [APPLICATION_API.md](APPLICATION_API.md), and [VERIFICATION.md](VERIFICATION.md) for current behavior and final acceptance.
+
 Stage 2 implements Java-only immutable values in `com.codeintel.domain.model`. The existing Java 21, Maven, JavaParser/Symbol Solver, and JUnit 5 build is preserved. No source-analysis adapter, graph algorithm, application query, or CLI implementation is introduced.
 
 ## Structure and decisions
