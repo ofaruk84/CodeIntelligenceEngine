@@ -1,6 +1,6 @@
 # Java Code Intelligence Engine
 
-Local Java source analysis engine. Build setup, immutable domain models, deterministic repository scanning, layout-based source-root discovery, and AST extraction and static symbol resolution with preserved failure diagnostics are complete. See [scanner contracts and limitations](docs/SCANNING.md). See [extraction coverage and recovery policy](docs/AST_EXTRACTION.md). See [symbol resolution and coverage limits](docs/SYMBOL_RESOLUTION.md). Graph queries and the CLI remain planned in [the roadmap](docs/ROADMAP.md).
+Local Java source analysis engine. Build setup, immutable domain models, deterministic repository scanning, layout-based source-root discovery, AST extraction, static symbol resolution, and the immutable indexed call graph with BFS traversal are complete. See [scanner contracts and limitations](docs/SCANNING.md), [extraction coverage and recovery policy](docs/AST_EXTRACTION.md), [symbol resolution and coverage limits](docs/SYMBOL_RESOLUTION.md), and [graph contracts and traversal semantics](docs/GRAPH.md). Application query services and the CLI remain planned in [the roadmap](docs/ROADMAP.md).
 
 ## Requirements and build
 
