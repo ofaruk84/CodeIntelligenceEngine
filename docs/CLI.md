@@ -42,13 +42,13 @@ java -jar target/code-intelligence.jar method src/test/resources/fixtures/commer
 java -jar target/code-intelligence.jar path src/test/resources/fixtures/commerce 'com.example.commerce.CycleA#run()' 'com.example.commerce.CycleC#run()'
 ```
 
-Canonical IDs have the form `type#method(parameter-types)`. The current extractor can retain unresolved parameter spellings even when call targets resolve, for example:
+Canonical IDs have the form `type#method(parameter-types)`. Repository analysis resolves parameter types before publishing definitions and call references, for example:
 
 ```sh
-java -jar target/code-intelligence.jar method src/test/resources/fixtures/commerce 'com.example.commerce.PaymentService#pay(unresolved:6:String)@54:src/main/java/com/example/commerce/PaymentService.java:6:5-6:55'
+java -jar target/code-intelligence.jar method src/test/resources/fixtures/commerce 'com.example.commerce.PaymentService#pay(java.lang.String)'
 ```
 
-Fallback IDs contain source ranges and may change after source edits or improved resolution. Stage 9 preserves the existing identity contract.
+Genuinely unresolved parameter types retain deterministic AST spellings and location-qualified fallback IDs. Existing IDs for resolvable reference parameters change; copy current IDs from search. Generic signatures use erasure and type-variable bounds, and varargs use arrays. Duplicate signatures are location-qualified with `IDENTITY_COLLISION` diagnostics. Identity normalization is independent of call-resolution coverage.
 
 ## Output and exit codes
 
@@ -109,7 +109,18 @@ $LASTEXITCODE
 
 Windows PowerShell can wrap native stderr text in `NativeCommandError`, including an ordinary Java INFO record or a coverage warning. That header alone does not indicate an application failure; inspect `$LASTEXITCODE` and the actual diagnostic. Default INFO noise is now suppressed, but genuine errors and coverage warnings remain visible. `--diagnostics-file` saves JSON directly without shell stderr redirection. To configure operational logs, supply a JUL properties file before `-jar`, for example `java '-Djava.util.logging.config.file=C:\config\logging.properties' -jar target/code-intelligence.jar scan $repo`. A file containing `.level=INFO`, `handlers=java.util.logging.ConsoleHandler`, and `java.util.logging.ConsoleHandler.level=INFO` enables INFO console logs.
 
-Lombok and other generators are a separate limitation: supplying an annotation dependency JAR does not generate missing accessors, constructors, builders, or other methods in source. No unresolved call is classified as generated without evidence. Calls and resolver failures remain available for investigation. Generated-method modeling is deferred; no DI or Spring semantic inference is included.
+Lombok and other generators are a separate limitation: supplying an annotation dependency JAR does not generate missing accessors, constructors, builders, or other methods in source. No unresolved call is classified as generated without evidence. Calls and resolver failures remain available for investigation. See the explicit prepared-input workflow below; no DI or Spring semantic inference is included.
+
+## Prepared generated-method inputs
+
+Analyze a separate, already prepared source tree containing transformed declarations and callers. A nonstandard root can be supplied with `--source-root generated/java`. This option adds solver roots; it does not exclude originals from scanning. Do not overlay original and generated declarations of the same class: source-root precedence cannot safely merge them. Duplicate callable signatures receive collision diagnostics and location-qualified IDs, but duplicate type declarations are not a supported merge workflow. Prepared-source locations and identities describe the prepared tree; no mapping back to original sources is claimed.
+
+Alternatively, supply an already compiled project JAR through `--dependency-jar` while analyzing a separate caller-only source tree without overlapping source declarations. Resolved compiled methods remain external targets with no fabricated source definitions. Original source takes precedence over JAR metadata, so adding bytecode beside an original class cannot supply its missing generated methods. These workflows reuse existing inputs and execute no processors or repository builds.
+
+```powershell
+java -jar target/code-intelligence.jar scan 'C:\prepared\clinic' --source-root 'generated/java'
+java -jar target/code-intelligence.jar scan 'C:\prepared\clinic-callers' --dependency-jar 'C:\prepared\clinic-model.jar'
+```
 
 `SOURCE_ROOT_UNCERTAIN` describes layout discovery, not a skipped or necessarily failed file. For example `.mvn/wrapper/MavenWrapperDownloader.java` remains analyzed; package-based inference can infer the default-package directory. The warning is retained to show nonstandard layout rather than silently excluding wrapper sources.
 

@@ -6,7 +6,6 @@ import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.ExplicitConstructorInvocationStmt;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.*;
-import com.github.javaparser.resolution.types.ResolvedType;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -69,16 +68,8 @@ final class CallResolver {
         String qualified = owner.getPackageName().isEmpty() ? owner.getClassName().replace('.', '$')
                 : owner.getPackageName() + "." + owner.getClassName().replace('.', '$');
         var parameters = new ArrayList<TypeReference>();
-        for (int i = 0; i < declaration.getNumberOfParams(); i++) parameters.add(type(declaration.getParam(i).getType()));
+        for (int i = 0; i < declaration.getNumberOfParams(); i++) parameters.add(ResolvedTypeIdentity.type(declaration.getParam(i).getType()));
         return MethodId.canonical(SymbolId.canonical(qualified), declaration instanceof ResolvedConstructorDeclaration ? "<init>" : declaration.getName(), parameters);
-    }
-
-    private TypeReference type(ResolvedType original) {
-        ResolvedType erased = original.erasure();
-        int dimensions = 0;
-        while (erased.isArray()) { dimensions++; erased = erased.asArrayType().getComponentType(); }
-        String name = erased.isReferenceType() ? erased.asReferenceType().getQualifiedName() : erased.describe();
-        return new TypeReference(name, dimensions, true);
     }
 
     private static SourceLocation location(String path, Node node) {

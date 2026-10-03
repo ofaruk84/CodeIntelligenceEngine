@@ -20,7 +20,7 @@ The recovery policy is deliberately conservative: an unsuccessful parser result 
 
 Unreadable/deleted sources produce a partial unit with `SOURCE_READ_ERROR`, exception class/message, and no invented line range. The unit's path identifies the file. Expected I/O/security failures are caught per file. Model declaration-validation failures produce `INVALID_DECLARATION` partial results. Unexpected runtime failures propagate rather than being blanket-suppressed. Batch iteration continues after expected failures.
 
-A non-partial unit means complete supported first-pass extraction, not compiler validation or resolved semantic correctness. Duplicate definition collection/rekeying, snapshot coverage, and graph construction remain later work. Stage 6 now uses discovered and package-inferred source roots for call resolution, retaining collected fallback identities. No analyzed repository builds execute and no analyzed dependencies are downloaded.
+A non-partial unit means complete supported extraction, not compiler validation or resolved semantic correctness. Repository analysis now finalizes declarations on retained ASTs after attaching source/JDK/explicit dependency solving, qualifies duplicate signatures, and only then resolves calls. The standalone `parse(path, source)` convenience retains syntax-only fallback identities. No analyzed repository builds execute and no analyzed dependencies are downloaded.
 
 ## Verification
 

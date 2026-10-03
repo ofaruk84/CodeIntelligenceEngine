@@ -124,4 +124,61 @@ class DiagnosticsAndClasspathTest {
         assertTrue(generated.coverage().unresolvedCalls().stream().anyMatch(call -> call.name().equals("getName")));
         assertFalse(generated.methods().keySet().stream().anyMatch(id -> id.contains("#getName(")));
     }
+
+    @Test void inheritedDependencyMethodsAndParameterIdentitiesUseExplicitMetadata() throws Exception {
+        Path jar = dependency("inherited.jar", """
+                package dependency;
+                public class Api extends Base {}
+                class Base {
+                    public String call(String value) { return value; }
+                    public String call(int value) { return ""; }
+                }
+                """);
+        Path repository = Files.createDirectory(temporary.resolve("inherited-source"));
+        Files.writeString(repository.resolve("Client.java"), """
+                import dependency.Api;
+                class Client { void run(Api api) { api.call("s"); api.call(1); } }
+                """);
+        var engine = EngineFactory.create();
+        var without = engine.analyze(repository);
+        assertEquals(2, without.coverage().unresolvedCalls().size());
+        assertTrue(without.methods().keySet().iterator().next().contains("unresolved:3:Api"));
+        var options = new AnalysisOptions(List.of(), List.of(jar));
+        var with = engine.analyze(repository, options);
+        assertEquals(Set.of("Client#run(dependency.Api)"), with.methods().keySet());
+        assertEquals(2, with.coverage().resolvedCallCount());
+        assertEquals(Set.of("dependency.Base#call(java.lang.String)", "dependency.Base#call(int)"),
+                new HashSet<>(with.coverage().externalTargets().stream().map(id -> id.value()).toList()));
+        assertEquals(with.sources(), engine.analyze(repository, options).sources());
+    }
+
+    @Test void generatedMethodsRequirePreparedSourcesOrUnshadowedCompiledMetadata() throws Exception {
+        var engine = EngineFactory.create();
+        Path original = Files.createDirectory(temporary.resolve("original"));
+        Files.createDirectories(original.resolve("dependency"));
+        Files.writeString(original.resolve("dependency/Api.java"), "package dependency; public class Api { private String name; }");
+        String client = "class Client { String run(dependency.Api api) { return api.getName(); } }";
+        Files.writeString(original.resolve("Client.java"), client);
+        assertEquals(1, engine.analyze(original).coverage().unresolvedCalls().size());
+
+        Path prepared = Files.createDirectory(temporary.resolve("prepared"));
+        Path sourceRoot = Files.createDirectories(prepared.resolve("generated/dependency"));
+        Files.writeString(sourceRoot.resolve("Api.java"), "package dependency; public class Api { public String getName() { return null; } }");
+        Files.writeString(prepared.resolve("Client.java"), client);
+        var sources = engine.analyze(prepared, new AnalysisOptions(List.of(Path.of("generated"))));
+        assertEquals(1, sources.coverage().resolvedCallCount());
+        assertTrue(sources.methods().containsKey("dependency.Api#getName()"));
+        assertTrue(sources.coverage().externalTargets().isEmpty());
+
+        Path jar = dependency("compiled-project.jar", "package dependency; public class Api { public String getName() { return null; } }");
+        Path clients = Files.createDirectory(temporary.resolve("clients-only"));
+        Files.writeString(clients.resolve("Client.java"), client);
+        var options = new AnalysisOptions(List.of(), List.of(jar));
+        var bytecode = engine.analyze(clients, options);
+        assertEquals(1, bytecode.coverage().resolvedCallCount());
+        assertEquals("dependency.Api#getName()", bytecode.coverage().externalTargets().getFirst().value());
+        assertFalse(bytecode.methods().containsKey("dependency.Api#getName()"));
+        // Original source wins; compiled metadata must not silently replace or merge it.
+        assertEquals(1, engine.analyze(original, options).coverage().unresolvedCalls().size());
+    }
 }

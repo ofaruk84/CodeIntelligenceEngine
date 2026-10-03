@@ -2,6 +2,8 @@
 
 ## Current completion
 
+Identity improvements were explicitly authorized and implemented on 2026-10-04: semantic declaration finalization before call indexing, deterministic collision disambiguation, and regression validation for explicit dependency metadata and prepared generated-method inputs. Existing source-root/JAR options suffice for the supported prepared-input workflows; automatic generation and source/bytecode overlay merging remain outside scope. See [SYMBOL_RESOLUTION.md](SYMBOL_RESOLUTION.md) and [CLI.md](CLI.md).
+
 Stage 10 was explicitly authorized and completed on 2026-10-04. All ten MVP stages are implemented/documented and the six acceptance questions pass from parsed synthetic sources. See [VERIFICATION.md](VERIFICATION.md) for current Java/Maven versions, full verification totals, packaged checks, platform skips and coverage limits. Stage 10 required documentation corrections only. Older planning restrictions are superseded for this authorized scope; deferred features still require explicit scope expansion. The structure below is the original proposal; actual adapter decomposition is explained in the stage documents.
 
 ## Status and inspection

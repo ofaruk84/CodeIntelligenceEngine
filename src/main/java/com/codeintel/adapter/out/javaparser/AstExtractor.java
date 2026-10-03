@@ -19,10 +19,16 @@ final class AstExtractor {
     private final List<ClassNode> types = new ArrayList<>();
     private final List<MethodCall> calls = new ArrayList<>();
     private String packageName;
+    private final boolean semanticTypes;
 
     AstExtractor(String path, String source) {
+        this(path, source, false);
+    }
+
+    AstExtractor(String path, String source, boolean semanticTypes) {
         this.path = path;
         this.source = source;
+        this.semanticTypes = semanticTypes;
         lineOffsets.add(0);
         for (int index = 0; index < source.length(); index++) {
             char character = source.charAt(index);
@@ -136,6 +142,17 @@ final class AstExtractor {
     }
 
     private TypeReference type(Type original) {
+        if (semanticTypes) {
+            try {
+                return ResolvedTypeIdentity.type(original.resolve());
+            } catch (com.github.javaparser.resolution.UnsolvedSymbolException | UnsupportedOperationException
+                     | IllegalStateException | IllegalArgumentException
+                     | com.github.javaparser.resolution.MethodAmbiguityException
+                     | com.github.javaparser.resolution.logic.ConflictingGenericTypesException
+                     | com.github.javaparser.ParseProblemException failure) {
+                // Keep a deterministic AST fallback when semantic metadata is unavailable.
+            }
+        }
         Type base = original.clone();
         int dimensions = 0;
         while (base.isArrayType()) { dimensions++; base = base.asArrayType().getComponentType(); }

@@ -21,10 +21,13 @@ public final class JavaParserSourceAnalyzer implements SourceAnalyzer {
     @Override public List<SourceUnit> analyze(RepositorySources sources, List<java.nio.file.Path> dependencyJars) {
         var units = new ArrayList<SourceUnit>();
         var asts = new java.util.LinkedHashMap<String, com.github.javaparser.ast.CompilationUnit>();
+        var texts = new java.util.HashMap<String, String>();
         for (var file : sources.files()) {
             String path = file.toString().replace('\\', '/');
             try {
-                units.add(parse(path, Files.readString(sources.repository().resolve(file), StandardCharsets.UTF_8), ast -> {
+                String source = Files.readString(sources.repository().resolve(file), StandardCharsets.UTF_8);
+                texts.put(path, source);
+                units.add(parse(path, source, ast -> {
                     ast.setStorage(sources.repository().resolve(file));
                     asts.put(path, ast);
                 }));
@@ -35,8 +38,15 @@ public final class JavaParserSourceAnalyzer implements SourceAnalyzer {
             }
         }
         var configuration = SymbolResolverConfiguration.create(sources, units, dependencyJars);
-        var resolver = new CallResolver(sources.repository(), units);
-        return units.stream().map(unit -> {
+        // Finalize every declaration and lexical caller before indexing any targets.
+        var finalized = DeclarationCollisions.qualify(units.stream().map(unit -> {
+            var ast = asts.get(unit.path());
+            if (ast == null || unit.partial()) return unit;
+            ast.setData(com.github.javaparser.ast.Node.SYMBOL_RESOLVER_KEY, configuration.getSymbolResolver().orElseThrow());
+            return new AstExtractor(unit.path(), texts.get(unit.path()), true).extract(ast);
+        }).toList());
+        var resolver = new CallResolver(sources.repository(), finalized);
+        return finalized.stream().map(unit -> {
             var ast = asts.get(unit.path());
             if (ast == null || unit.partial()) return unit;
             ast.setData(com.github.javaparser.ast.Node.SYMBOL_RESOLVER_KEY, configuration.getSymbolResolver().orElseThrow());

@@ -1,5 +1,19 @@
 # Final MVP verification
 
+## Identity improvement verification (2026-10-04)
+
+The explicitly authorized identity changes passed `mvn -o verify` on the Java 21/Maven 3.9 environment below: 87 Surefire tests, 85 passed and two existing platform-dependent scanner skips, zero failures/errors; one Failsafe test passed with seven packaged processes. Focused identity/resolver/fixture tests (12) and dependency/generated-input tests (6) also passed. No dependencies were installed or fetched. `git diff --check` passed.
+
+Regression coverage includes canonical String and project types, nested types, overloaded constructors/methods, arrays/varargs, generic erasure and bounds, missing parameter fallback identities, erasure collisions with distinct lexical callers, consistent definition/graph/lookup/impact IDs, deterministic snapshots, inherited dependency overloads, and explicit prepared-source/compiled-metadata workflows. Existing tests preserve complete failure evidence, bounded default diagnostics, explicit JAR precedence and runtime-classpath isolation. No demonstrated defect required changing JAR loading or adding another option.
+
+A read-only packaged search/scan of `C:\dev\Java-Spring-RESTful-Api-JPA-Vet-Clinic-Management-System` compared the existing distribution to the new distribution, without supplied dependency JARs. Both returned 100 scanned/parsed files, zero failed, 100 types, 285 callables, 1,477 call sites, 914 resolved, 563 unresolved, zero ambiguous, 67 external targets and two callerless calls. Among 285 callable search results, fallback signatures fell from 211 to 12 (canonical signatures rose from 74 to 273). This improves identity quality independently of unchanged call coverage; no call-resolution gain is claimed. Remaining fallback parameters include unavailable servlet/Spring types. Search and exact canonical method lookup exited zero. Smoke outputs and complete new JSONL evidence are under `target/identity-smoke/`; test/build logs are `target/identity-tests.log`, `target/dependency-tests.log`, and `target/identity-verify.log`.
+
+Examples: `com.works.utils.UserService#loadUserByUsername(unresolved:6:String)@46:src/main/java/com/works/utils/UserService.java:54:5-72:5` becomes `com.works.utils.UserService#loadUserByUsername(java.lang.String)`; the `register(unresolved:4:User)` fallback becomes `com.works.utils.UserService#register(com.works.entities.User)`. Existing IDs have no aliases. The original user diagnostics log was only read; SHA-256 before/after remained `A762C1CA96880C2A93E57E97EEBEEDD4ABD1BF4BD9959161D2FAB062A7559F00`.
+
+Prepared-source analysis resolves an explicitly provided accessor with a source definition. A caller-only source tree plus an explicit compiled project JAR resolves that accessor as an external target without a fabricated definition. Original discoverable source takes precedence over compiled metadata and keeps the absent accessor unresolved; an annotation JAR alone also leaves generated accessors unresolved. Duplicate original/generated overlays are not a supported merge workflow. No annotation processor, analyzed build, generated-method guessing, or DI inference runs.
+
+Runnable distribution: `C:\dev\CodebaseInspector\target\code-intelligence.jar`. The stage 10 checks below describe the earlier distribution and totals.
+
 Stage 10 was explicitly authorized and completed on 2026-10-04 (Europe/Istanbul). This report describes the current implementation; dated verification sections in earlier stage documents are historical evidence. No production code or build configuration changes were needed in stage 10. No commit or publication was created.
 
 ## Environment and build
@@ -20,7 +34,7 @@ All six original MVP questions are answered from synthetic parsed sources by app
 
 | Question | Packaged command and verified result |
 | --- | --- |
-| Which methods exist? | `search ... '#pay('` returns two distinct payment overload IDs; `method` retrieves the exact fallback String definition |
+| Which methods exist? | `search ... '#pay('` returns two distinct payment overload IDs; `method` retrieves the exact String definition (now canonical) |
 | What does a method call? | `callees` for the String/int payment overload includes the String payment overload (same-class delegation) |
 | Who calls it directly? | `callers` for the String/int payment overload includes RetryPaymentJob.retry |
 | Who depends on it indirectly? | `dependencies` for CycleA.run returns CycleB.run at distance 1 and CycleC.run at distance 2 |

@@ -32,13 +32,13 @@ class SyntheticFixtureTest {
         assertEquals(List.of("payments", "inventory", "notifications"), type.fields().stream().map(FieldInfo::name).toList());
         assertTrue(type.fields().stream().allMatch(f -> f.modifiers().equals(Set.of("private", "final"))));
         var constructor = type.methods().stream().filter(m -> m.kind() == CallableKind.CONSTRUCTOR).findFirst().orElseThrow();
-        assertEquals(List.of("PaymentService", "InventoryService", "NotificationService"), constructor.parameters().stream().map(p -> p.type().name()).toList());
+        assertEquals(List.of("com.example.commerce.PaymentService", "com.example.commerce.InventoryService", "com.example.commerce.NotificationService"), constructor.parameters().stream().map(p -> p.type().name()).toList());
         assertEquals(List.of("payments", "inventory", "notifications"), constructor.parameters().stream().map(ParameterInfo::name).toList());
         assertTrue(constructor.returnType().isEmpty());
         var overloads = unit(units, "PaymentService").types().getFirst().methods().stream().filter(m -> m.id().name().equals("pay")).toList();
         assertEquals(List.of(1, 2), overloads.stream().map(m -> m.parameters().size()).toList());
         assertEquals(2, overloads.stream().map(MethodNode::id).distinct().count());
-        assertTrue(overloads.stream().allMatch(m -> m.id().declaration().isPresent()));
+        assertTrue(overloads.stream().allMatch(m -> m.id().declaration().isEmpty()));
         var worker = unit(units, "NestedTypes").types().get(1);
         assertEquals("com.example.commerce.NestedTypes$Worker", worker.id().value());
         assertEquals(ClassNode.Nesting.MEMBER, worker.nesting());
@@ -91,9 +91,9 @@ class SyntheticFixtureTest {
                 "RetryPaymentJob", List.of("payments.pay(orderId, 2)"));
         for (var entry : expected.entrySet())
             assertEquals(entry.getValue(), unit(units, entry.getKey()).calls().stream().map(MethodCall::rawExpression).toList());
-        assertEquals(List.of("CycleB", "CycleC", "CycleA"), List.of("CycleA", "CycleB", "CycleC").stream()
+        assertEquals(List.of("com.example.commerce.CycleB", "com.example.commerce.CycleC", "com.example.commerce.CycleA"), List.of("CycleA", "CycleB", "CycleC").stream()
                 .map(name -> unit(units, name).types().getFirst().fields().getFirst().type().name()).toList());
-        assertEquals(List.of("InventoryRepository"), unit(units, "InventoryService").types().getFirst().fields().stream().map(f -> f.type().name()).toList());
+        assertEquals(List.of("com.example.commerce.InventoryRepository"), unit(units, "InventoryService").types().getFirst().fields().stream().map(f -> f.type().name()).toList());
     }
     @Test void isolatesMalformedResourcesAndRetainsValidBatchResults() throws Exception {
         var sources = new FileSystemRepositoryScanner().scan(fixture(""));

@@ -31,6 +31,8 @@ java -jar target/code-intelligence.jar impact src/test/resources/fixtures/commer
 
 Use the exact IDs returned by `search`, including fallback location qualifiers. Each invocation analyzes once in memory. Default diagnostics are summarized; use `--detailed-diagnostics` for full human evidence or `--diagnostics-file <new-path>` for JSON Lines. Repeat `--dependency-jar <path>` for explicit local dependencies; no project dependency downloads or annotation processors run. See [all commands, quoting, exit codes, and verification](docs/CLI.md).
 
+Repository analysis canonicalizes resolvable parameter signatures before publishing definitions and graph references. For generated methods, analyze a separate prepared source tree, or supply compiled project metadata while analyzing callers without overlapping source declarations. See [prepared generated-method inputs](docs/CLI.md#prepared-generated-method-inputs); annotation JARs alone do not generate methods.
+
 ## Package boundaries
 
 - `domain.model`, `domain.graph`: parser-independent domain values and graph behavior.
