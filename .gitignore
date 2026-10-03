@@ -1,0 +1,6 @@
+/target/
+.idea/
+*.iml
+.vscode/
+.maven-cache/
+test.txt
