@@ -29,7 +29,7 @@ java -jar target/code-intelligence.jar search src/test/resources/fixtures/commer
 java -jar target/code-intelligence.jar impact src/test/resources/fixtures/commerce 'com.example.commerce.CycleA#run()'
 ```
 
-Use the exact IDs returned by `search`, including fallback location qualifiers. Each invocation analyzes once in memory. See [all commands, quoting, exit codes, and verification](docs/CLI.md).
+Use the exact IDs returned by `search`, including fallback location qualifiers. Each invocation analyzes once in memory. Default diagnostics are summarized; use `--detailed-diagnostics` for full human evidence or `--diagnostics-file <new-path>` for JSON Lines. Repeat `--dependency-jar <path>` for explicit local dependencies; no project dependency downloads or annotation processors run. See [all commands, quoting, exit codes, and verification](docs/CLI.md).
 
 ## Package boundaries
 

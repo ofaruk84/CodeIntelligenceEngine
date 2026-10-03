@@ -15,6 +15,10 @@ import java.util.Optional;
 /** Local two-pass adapter; private AST state never crosses the application port. */
 public final class JavaParserSourceAnalyzer implements SourceAnalyzer {
     @Override public List<SourceUnit> analyze(RepositorySources sources) {
+        return analyze(sources, List.of());
+    }
+
+    @Override public List<SourceUnit> analyze(RepositorySources sources, List<java.nio.file.Path> dependencyJars) {
         var units = new ArrayList<SourceUnit>();
         var asts = new java.util.LinkedHashMap<String, com.github.javaparser.ast.CompilationUnit>();
         for (var file : sources.files()) {
@@ -30,7 +34,7 @@ public final class JavaParserSourceAnalyzer implements SourceAnalyzer {
                         Optional.empty(), List.of()))));
             }
         }
-        var configuration = SymbolResolverConfiguration.create(sources, units);
+        var configuration = SymbolResolverConfiguration.create(sources, units, dependencyJars);
         var resolver = new CallResolver(sources.repository(), units);
         return units.stream().map(unit -> {
             var ast = asts.get(unit.path());

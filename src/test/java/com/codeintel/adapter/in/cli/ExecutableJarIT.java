@@ -33,7 +33,7 @@ class ExecutableJarIT {
             String out = Files.readString(stdout); String err = Files.readString(stderr);
             assertEquals(expected, process.exitValue(), () -> out + "\n" + err);
             if (args[0].equals("scan") && expected == 0) {
-                assertTrue(out.contains("scanned=13")); assertTrue(err.contains("Snapshot-wide UNRESOLVED"));
+                assertTrue(out.contains("scanned=13")); assertTrue(err.contains("Snapshot-wide UNRESOLVED")); assertFalse(err.contains("INFO:"));
             }
             if (args[0].equals("impact")) assertTrue(out.contains("CycleC#run()"));
             if (expected == 2) assertTrue(err.contains("Usage error"));

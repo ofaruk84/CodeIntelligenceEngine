@@ -18,7 +18,13 @@ public final class CodeIntelCli {
             var snapshot = analysis.analyze(arguments.repository(), arguments.options());
             var renderer = new CliRenderer(out, err);
             renderer.summary(snapshot);
-            renderer.coverage(snapshot.coverage());
+            renderer.coverage(snapshot.coverage(), arguments.detailedDiagnostics());
+            if (arguments.diagnosticsFile() != null) {
+                try { DiagnosticsWriter.write(arguments.diagnosticsFile(), snapshot); }
+                catch (IOException | SecurityException failure) {
+                    err.println("Cannot save diagnostics: " + failure.getMessage()); return 3;
+                }
+            }
             boolean found = renderer.query(arguments, new CodeIntelligenceService(snapshot), snapshot);
             if (!found) return 4;
             return snapshot.coverage().partialScan() || !snapshot.coverage().partialSources().isEmpty() ? 5 : 0;

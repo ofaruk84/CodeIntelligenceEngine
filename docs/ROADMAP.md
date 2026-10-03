@@ -190,9 +190,9 @@ Stages 1 through 9 were explicitly authorized and implemented. Stage 8 authoriza
 
 ## Assumptions and deferred capabilities
 
-Source-only analysis with JDK metadata is sufficient for MVP. Missing third-party classpaths reduce coverage and are reported; build files are not executed. Standard main and test Java sources are included by default. Output is deterministic for an unchanged repository and the same tool configuration. No persistent index, incremental/watch mode, or multi-module Maven engine split is required.
+Source analysis with JDK metadata is the default. Explicit local dependency-JAR metadata support and concise/exportable CLI diagnostics were authorized and implemented on 2026-10-03; see CLI.md and SYMBOL_RESOLUTION.md. Missing third-party classpaths reduce coverage and are reported; build files are not executed. Standard main and test Java sources are included by default. Output is deterministic for an unchanged repository and the same tool configuration. No persistent index, incremental/watch mode, or multi-module Maven engine split is required.
 
-Deferred: MCP/Claude integration, network servers, Spring annotations and dependency injection, endpoint mappings, JPA/SQL/table analysis, external-system inference, other programming languages, SaaS, authentication, billing, and external graph/database storage. Adding these requires an explicit scope expansion.
+Deferred: generated-method modeling (including Lombok, without running annotation processors), MCP/Claude integration, network servers, Spring annotations and dependency injection, endpoint mappings, JPA/SQL/table analysis, external-system inference, other programming languages, SaaS, authentication, billing, and external graph/database storage. Adding these requires an explicit scope expansion.
 
 ## Definition of done
 

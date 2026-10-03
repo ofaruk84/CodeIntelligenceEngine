@@ -85,7 +85,7 @@ public final class FileSystemRepositoryScanner implements RepositoryScanner {
         for (Path file : files) {
             if (roots.stream().noneMatch(root -> root.toString().isEmpty() || file.startsWith(root))) {
                 diagnostics.add(new Diagnostic("SOURCE_ROOT_UNCERTAIN", file,
-                        "No standard or explicit source root; package-based inference is deferred to AST parsing"));
+                        "File is still analyzed; no layout-based source root. AST parsing may infer a root when package and directory agree (including default-package wrapper sources)"));
             }
         }
         diagnostics.sort(Comparator.comparing(Diagnostic::path, PATH_ORDER).thenComparing(Diagnostic::code)

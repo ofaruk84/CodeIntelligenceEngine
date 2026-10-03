@@ -8,9 +8,9 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.*;
 import java.nio.file.Path;
 import java.util.*;
 
-/** Source-only solver configuration; never imports the engine dependency classpath. */
+/** Explicit local solver configuration; never imports the engine dependency classpath. */
 final class SymbolResolverConfiguration {
-    static ParserConfiguration create(RepositorySources sources, List<SourceUnit> units) {
+    static ParserConfiguration create(RepositorySources sources, List<SourceUnit> units, List<Path> dependencyJars) {
         var roots = new TreeSet<Path>(Comparator.comparing(Path::toString));
         sources.sourceRoots().forEach(root -> roots.add(sources.repository().resolve(root)));
         for (var unit : units) {
@@ -27,6 +27,42 @@ final class SymbolResolverConfiguration {
         var solver = new CombinedTypeSolver();
         var parsing = new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21).setTabSize(1);
         roots.forEach(root -> solver.add(new JavaParserTypeSolver(root, parsing)));
+        // Source definitions take precedence; explicit JAR order is retained, duplicates removed.
+        var jars = new LinkedHashSet<Path>();
+        dependencyJars.forEach(path -> jars.add(path.toAbsolutePath().normalize()));
+        var pool = new javassist.ClassPool(false);
+        // Metadata only from the bootstrap JDK resource context, never the engine classpath.
+        pool.appendClassPath(new javassist.ClassClassPath(Object.class));
+        var jarDeclarations = new ArrayList<List<javassist.CtClass>>();
+        for (var jar : jars) {
+            if (!java.nio.file.Files.isRegularFile(jar) || !java.nio.file.Files.isReadable(jar))
+                throw new IllegalArgumentException("Dependency JAR is not a readable regular file: " + jar);
+            var declarations = new ArrayList<javassist.CtClass>();
+            // Eager bytecode metadata avoids JarTypeSolver's uncloseable cached URL archive handles.
+            try (var archive = new java.util.jar.JarFile(jar.toFile(), true,
+                    java.util.zip.ZipFile.OPEN_READ, Runtime.version())) {
+                for (var entry : archive.versionedStream().filter(e -> !e.isDirectory()
+                        && e.getName().endsWith(".class") && !e.getName().startsWith("META-INF/")
+                        && !e.getName().equals("module-info.class")).sorted(Comparator.comparing(java.util.jar.JarEntry::getName)).toList()) {
+                    try (var input = new java.io.DataInputStream(archive.getInputStream(entry))) {
+                        var metadata = new javassist.bytecode.ClassFile(input);
+                        var known = pool.getOrNull(metadata.getName());
+                        declarations.add(known != null ? known : pool.makeClass(metadata));
+                    }
+                }
+            } catch (java.io.IOException | RuntimeException failure) {
+                throw new IllegalArgumentException("Invalid dependency JAR " + jar + ": " + failure.getMessage(), failure);
+            }
+            jarDeclarations.add(declarations);
+        }
+        for (var declarations : jarDeclarations) {
+            var jarSolver = new MemoryTypeSolver();
+            solver.add(jarSolver);
+            for (var declaration : declarations) {
+                var type = com.github.javaparser.symbolsolver.javassistmodel.JavassistFactory.toTypeDeclaration(declaration, solver);
+                jarSolver.addDeclaration(declaration.getName().replace('$', '.'), type);
+            }
+        }
         solver.add(new ReflectionTypeSolver(SymbolResolverConfiguration::isJdkType));
         return new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21).setTabSize(1)
                 .setSymbolResolver(new JavaSymbolSolver(solver));

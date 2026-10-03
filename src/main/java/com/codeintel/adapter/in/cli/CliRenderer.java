@@ -22,7 +22,12 @@ public final class CliRenderer {
                 dependencies <repository> <method-id>
                 path <repository> <source-id> <target-id>
                 impact <repository> <method-id>
-                Options: --source-root <path> (repeatable, anywhere before --)
+                Options (anywhere before --):
+                  --source-root <path> (repeatable)
+                  --dependency-jar <path> (repeatable; one local JAR per flag, no separator lists)
+                  --detailed-diagnostics (full stderr evidence, each failed call once)
+                  --diagnostics-file <new-path> (UTF-8 JSON Lines; refuses overwrite)
+                Relative JAR and diagnostics paths use the working directory.
                 Relative repositories use the working directory; relative roots use the repository.
                 Roots augment discovery and must be inside the repository. -- ends option parsing.
                 Quote complete IDs, especially parentheses, <init>, and nested-type $ characters.
@@ -43,20 +48,42 @@ public final class CliRenderer {
                 c.resolvedCallCount(), c.unresolvedCalls().size(), c.ambiguousCalls().size(), c.externalTargets().size(), c.callsWithoutCaller().size());
         out.println("Source roots: " + snapshot.repository().sourceRoots().stream().map(p -> p.toString().replace('\\', '/')).sorted().toList());
     }
-    public void coverage(ResolutionCoverage c) {
+    public void coverage(ResolutionCoverage c, boolean detailed) {
         if (c.incomplete()) err.println("Coverage incomplete: resolved reachability is a lower bound; static calls do not prove runtime execution.");
-        c.scanDiagnostics().forEach(d -> err.println("Scan diagnostic " + d.code() + " " + d.path().toString().replace('\\', '/') + ": " + line(d.message())));
-        c.sourceDiagnostics().forEach(d -> {
-            err.println("Source diagnostic " + d.severity() + " " + d.code() + " " + d.location().map(CliRenderer::location).orElse("(no range)") + ": " + line(d.message()));
-            d.relatedLocations().forEach(l -> err.println("  Related: " + location(l)));
-        });
-        c.partialSources().forEach(path -> err.println("Partial source: " + path));
         var calls = new ArrayList<MethodCall>(c.unresolvedCalls()); calls.addAll(c.ambiguousCalls());
-        calls.sort(Comparator.comparing((MethodCall call) -> call.location().path()).thenComparingInt(call -> call.location().startLine()).thenComparingInt(call -> call.location().startColumn()));
-        calls.forEach(call -> err.println("Snapshot-wide " + call.status() + " " + location(call.location())
-                + " caller=" + call.caller().map(MethodId::value).orElse("(none)") + " expression=" + line(call.rawExpression())
-                + " failure=" + line(call.failure().orElseThrow().toString())));
+        calls.sort(Comparator.comparing((MethodCall call) -> call.location().path())
+                .thenComparingInt(call -> call.location().startLine()).thenComparingInt(call -> call.location().startColumn()));
+        var groups = new TreeMap<String, List<String>>();
+        c.scanDiagnostics().forEach(d -> add(groups, "Scan " + d.code(),
+                d.path().toString().replace('\\', '/') + ": " + line(d.message())));
+        c.sourceDiagnostics().stream().filter(d -> !represented(d, calls)).forEach(d -> add(groups,
+                "Source " + d.severity() + " " + d.code(),
+                d.location().map(CliRenderer::location).orElse("(no range)") + ": " + line(d.message())
+                        + (d.relatedLocations().isEmpty() ? "" : " related=" + d.relatedLocations())));
+        c.partialSources().forEach(path -> add(groups, "Partial source", path));
+        calls.forEach(call -> add(groups, "Snapshot-wide " + call.status() + " " + call.failure().orElseThrow().category(),
+                location(call.location()) + " caller=" + call.caller().map(MethodId::value).orElse("(none)")
+                        + " expression=" + line(call.rawExpression()) + " failure=" + line(call.failure().orElseThrow().message())));
+        groups.forEach((reason, examples) -> {
+            err.println(reason + ": count=" + examples.size());
+            examples.stream().limit(detailed ? Long.MAX_VALUE : 3).forEach(example ->
+                    err.println("  " + (detailed ? example : bounded(example))));
+            if (!detailed && examples.size() > 3) err.println("  ... " + (examples.size() - 3) + " more");
+        });
+        if (!calls.isEmpty()) {
+            err.println("Missing dependency metadata and solver limitations can leave calls unresolved. Supply explicit --dependency-jar paths when available.");
+            err.println("Generated methods (for example Lombok accessors) are not materialized by adding an annotation JAR; annotation processors are not run.");
+            if (!detailed) err.println("Use --detailed-diagnostics or --diagnostics-file <new-path> for full evidence.");
+        }
     }
+    private static void add(Map<String, List<String>> groups, String reason, String example) {
+        groups.computeIfAbsent(reason, key -> new ArrayList<>()).add(example);
+    }
+    private static boolean represented(AnalysisDiagnostic diagnostic, List<MethodCall> calls) {
+        return diagnostic.severity() == DiagnosticSeverity.WARNING && calls.stream().anyMatch(call -> diagnostic.location().equals(Optional.of(call.location()))
+                && call.failure().map(f -> f.category().equals(diagnostic.code()) && f.message().equals(diagnostic.message())).orElse(false));
+    }
+    private static String bounded(String value) { return value.length() <= 400 ? value : value.substring(0, 397) + "..."; }
     public boolean query(CliArguments args, CodeIntelligenceService service, AnalysisSnapshot snapshot) {
         var operands = args.operands();
         switch (args.command()) {

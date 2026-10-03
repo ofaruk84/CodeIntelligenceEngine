@@ -52,7 +52,7 @@ Fallback IDs contain source ranges and may change after source edits or improved
 
 ## Output and exit codes
 
-Stdout contains deterministic summaries and query results. Stderr contains coverage, scan/source diagnostics, unresolved/ambiguous call expressions, caller IDs, failure context, and ordinary errors without stack traces. Core services also log operational messages on stderr; their default logger timestamps are not deterministic output. Diagnostic multiline messages are flattened for readable records. Source ranges and paths are repository-relative; input failures can include the invalid absolute path.
+Stdout contains deterministic summaries and query results. Stderr contains coverage limitations and diagnostic counts grouped by reason, with at most three representative examples per reason (each limited to 400 characters), plus ordinary errors without stack traces. Resolver warnings represented by failed call records are suppressed in human output so each failure is presented once. Full structured analysis results are unchanged. The executable defaults project logging to WARNING, retaining real warnings/errors; explicit JUL configuration is honored. Diagnostic multiline messages are flattened for readable records. Source ranges and paths are repository-relative; input failures can include the invalid absolute path.
 
 `scanned` counts discovered Java files; `failed` counts units with parse/read/invalid-declaration failures, and `parsed` counts other units. Types include nested types and callables include explicit constructors. Call sites retain repeated occurrences; resolved graph edges are deduplicated. Resolution counts include resolved, unresolved and ambiguous sites, unique external targets, and sites without lexical caller identity.
 
@@ -61,7 +61,7 @@ Stdout contains deterministic summaries and query results. Stderr contains cover
 | 0 | Completed command, including empty results, known disconnected paths, and resolution limitations |
 | 1 | Fatal unexpected runtime failure |
 | 2 | Invalid command syntax/options; no analysis |
-| 3 | Invalid repository or analysis input, including inaccessible/non-directory repository or forbidden root |
+| 3 | Invalid repository or analysis input, including inaccessible/non-directory repository, forbidden root, invalid dependency JAR, or diagnostics export failure |
 | 4 | Unknown graph ID |
 | 5 | Query completed with partial scan or partial source extraction; available results are printed |
 
@@ -80,3 +80,43 @@ On 2026-10-03, `mvn clean verify` passed on Java 21.0.12.1 and Maven 3.9.16: 79 
 Direct packaged smoke checks also passed for all eight commands, a constructor ID, and a nested-type ID. The commerce scan returned 13 scanned/parsed files, 0 failures, 14 types, 30 callables, 21 call sites, 20 resolved calls and 1 unresolved call, with exit 0. Scanning all included fixtures continued past `malformed/Broken.java`: 16 scanned, 15 parsed, 1 failed, with exit 5. The cycle path was `CycleA#run() -> CycleB#run() -> CycleC#run()`.
 
 Adapter tests cover all commands, one analysis per invocation, syntax without analysis, deterministic output, roots, malformed-file continuation, unresolved visibility, cycles, constructors/nested types, external targets, unknown IDs, and exit outcomes. Packaged process tests capture both streams in files to avoid pipe deadlocks, have 45-second timeouts, and run without an additional classpath from an unrelated working directory.
+
+## Diagnostic and dependency options (2026-10-03)
+
+Implementation of these improvements was explicitly authorized. All flags may appear anywhere before `--`.
+
+| Option | Contract |
+| --- | --- |
+| `--detailed-diagnostics` | Print every diagnostic example without truncation, each failed call once; query stdout stays unchanged |
+| `--diagnostics-file <new-path>` | Save full UTF-8 JSON Lines evidence; one occurrence allowed; refuse existing destinations rather than overwrite user data |
+| `--dependency-jar <path>` | Repeat once per explicitly supplied local archive; no semicolon/colon lists, wildcards, directory crawling, Maven cache discovery, or transitive dependency downloads |
+
+Relative JAR and output paths resolve against the process working directory, on Windows and POSIX. Quote paths with spaces. Relative source roots still resolve against the analyzed repository. Source solvers take precedence, followed by explicit JARs in flag order (normalized duplicate paths are removed), followed by restricted JDK metadata. Duplicate classes in JARs use the first supplied definition. JARs need not reside inside the analyzed repository. Supply all dependencies required by the referenced types yourself. These options perform metadata analysis only: no repository builds, analyzed code execution, or annotation processing.
+
+Missing, unreadable, non-file, malformed archives, or malformed class entries are invalid analysis inputs (exit 3). Empty valid archives are accepted but add no types. A failed export returns exit 3 and may leave an incomplete newly created file; existing files are never overwritten. Output parent directories must already exist. Query results remain successful with unresolved calls alone (exit 0); partial source/scan outcomes retain exit 5.
+
+The saved file starts with `kind: summary`, `schemaVersion: 1`, repository, partialScan, partialSources, resolved/unresolved/ambiguous counts, and externalTargets. Subsequent lines are `scanDiagnostic`, `sourceDiagnostic`, or `call` objects, in analysis order. Each line is one JSON object. Scan diagnostics contain code, path and message. Source diagnostics contain severity, code, path, message, nullable location, and relatedLocations. Every call (including resolved sites) contains status, location, expression, name, nullable scope/caller/target, and nullable failure (category, message, competingTargets). Locations contain path, startLine, startColumn, endLine, endColumn. Lines, columns and paths retain the existing repository-relative source contract. Source diagnostics and call records intentionally preserve distinct structured evidence; a matching failure can occur in both record kinds, linked by location/code/message. Human diagnostics suppress that duplicate presentation.
+
+```powershell
+$repo = 'C:\dev\Java-Spring-RESTful-Api-JPA-Vet-Clinic-Management-System'
+java -jar target/code-intelligence.jar scan $repo
+java -jar target/code-intelligence.jar search $repo 'Service' --diagnostics-file '.\diagnostics-service.jsonl'
+java -jar target/code-intelligence.jar scan $repo --detailed-diagnostics
+# Optional: replace these paths with actual, locally available dependencies.
+java -jar target/code-intelligence.jar scan $repo --dependency-jar 'C:\libraries\spring-context.jar' --dependency-jar 'C:\libraries\spring-core.jar'
+$LASTEXITCODE
+```
+
+Windows PowerShell can wrap native stderr text in `NativeCommandError`, including an ordinary Java INFO record or a coverage warning. That header alone does not indicate an application failure; inspect `$LASTEXITCODE` and the actual diagnostic. Default INFO noise is now suppressed, but genuine errors and coverage warnings remain visible. `--diagnostics-file` saves JSON directly without shell stderr redirection. To configure operational logs, supply a JUL properties file before `-jar`, for example `java '-Djava.util.logging.config.file=C:\config\logging.properties' -jar target/code-intelligence.jar scan $repo`. A file containing `.level=INFO`, `handlers=java.util.logging.ConsoleHandler`, and `java.util.logging.ConsoleHandler.level=INFO` enables INFO console logs.
+
+Lombok and other generators are a separate limitation: supplying an annotation dependency JAR does not generate missing accessors, constructors, builders, or other methods in source. No unresolved call is classified as generated without evidence. Calls and resolver failures remain available for investigation. Generated-method modeling is deferred; no DI or Spring semantic inference is included.
+
+`SOURCE_ROOT_UNCERTAIN` describes layout discovery, not a skipped or necessarily failed file. For example `.mvn/wrapper/MavenWrapperDownloader.java` remains analyzed; package-based inference can infer the default-package directory. The warning is retained to show nonstandard layout rather than silently excluding wrapper sources.
+
+## Improvement verification
+
+On 2026-10-03, offline `mvn -o clean verify` passed, followed by final `mvn -o verify`: 83 Surefire tests, 81 passed and 2 existing platform-dependent scanner tests skipped; one Failsafe test passed with seven fresh packaged-JAR processes. No failures or errors. New synthetic regressions cover 600 unresolved calls with bounded default output, detailed presentation without duplicate resolver warnings, complete JSON Lines evidence, refusing overwrites, export/syntax errors, local dependency overloads/nested targets, source identity preservation and precedence, explicit ordering/duplicates/relative paths, engine classpath isolation with supplied JARs, invalid archives/class entries, Windows archive unlocking, and absent generated accessors despite a synthetic Lombok-like annotation JAR.
+
+Read-only scan and `search ... 'Service'` smoke tests against the available vet-clinic repository both exited 0. Both retained exactly 100 scanned/parsed files, 0 failed, 100 types, 285 callables, 1,477 call sites, 914 resolved, 563 unresolved, 0 ambiguous, 67 external targets, and 2 calls without caller. No dependency JARs were supplied, so no resolution improvement is claimed. Default stderr was 11 lines / 1,877 UTF-8 bytes for each command; the old PowerShell redirected log was 821,114 bytes (different shell formatting/encoding). The new export contains 2,042 valid JSON objects including all 1,477 calls and 563 source diagnostics. The original user log's SHA-256 was unchanged. New smoke artifacts are under `target/real-repository-smoke/`; they are build-local outputs, not committed third-party fixtures.
+
+Additional packaged checks confirmed the synthetic dependency call changes from 0 resolved / 1 unresolved to 1 resolved / 0 unresolved with an explicitly supplied JAR. Real-repository detailed mode exited 0 and contained exactly 563 failed-call examples; the final UTF-8 export parsed successfully.

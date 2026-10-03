@@ -22,7 +22,7 @@ public final class RepositoryAnalysisService {
     }
     public AnalysisSnapshot analyze(Path repository, AnalysisOptions options) throws IOException {
         var sources = scanner.scan(repository, Objects.requireNonNull(options).additionalRoots());
-        var units = java.util.List.copyOf(analyzer.analyze(sources));
+        var units = java.util.List.copyOf(analyzer.analyze(sources, options.dependencyJars()));
         var snapshot = new AnalysisSnapshot(sources, units, graphs.build(units));
         LOG.log(System.Logger.Level.INFO, "Analyzed {0} source files", units.size());
         return snapshot;
