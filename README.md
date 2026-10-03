@@ -1,6 +1,6 @@
 # Java Code Intelligence Engine
 
-Local Java source analysis engine. The initial build setup is complete; engine behavior and the CLI remain planned in [the roadmap](docs/ROADMAP.md).
+Local Java source analysis engine. Build setup, immutable domain models, deterministic repository scanning, and layout-based source-root discovery are complete. See [scanner contracts and limitations](docs/SCANNING.md). Parsing, resolution, graph queries, and the CLI remain planned in [the roadmap](docs/ROADMAP.md).
 
 ## Requirements and build
 

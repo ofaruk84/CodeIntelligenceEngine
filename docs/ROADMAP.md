@@ -2,7 +2,7 @@
 
 ## Status and inspection
 
-The original planning inspection on 2026-09-25 found an empty `C:\dev\LegacyCodebaseInspector`. The saved project is now `C:\dev\CodebaseInspector`. The user subsequently authorized build setup and stage 2 implementation. The Maven scaffold and immutable domain models are implemented; later stages remain planned and require authorization. See [DOMAIN_MODEL.md](DOMAIN_MODEL.md) for stage 2 decisions and verification. The older planning-only wording in `AGENTS.md` is superseded by that explicit stage 2 authorization only; it does not authorize later stages.
+The original planning inspection on 2026-09-25 found an empty `C:\dev\LegacyCodebaseInspector`. The saved project is now `C:\dev\CodebaseInspector`. The user subsequently authorized build setup, stage 2, and stage 3 implementation. The Maven scaffold, immutable domain models, deterministic scanner, and layout-based source-root discovery are implemented. See [DOMAIN_MODEL.md](DOMAIN_MODEL.md) and [SCANNING.md](SCANNING.md) for decisions and verification. Explicit stage 3 authorization supersedes the planning-only wording in `AGENTS.md` for this stage; later stages still require authorization.
 
 ## Product and scope
 
@@ -12,7 +12,7 @@ Technology: Java 21, one Maven module, JavaParser, JavaParser Symbol Solver, and
 
 ## Proposed exact module and package structure
 
-The following is the intended complete MVP structure. Only build setup, package documentation, domain models, and their setup/model tests currently exist. The Maven artifact is `com.codeintel:code-intelligence`; `target/code-intelligence.jar` is currently a library and will become executable in the CLI stage.
+The following is the intended complete MVP structure. Build setup, package documentation, domain models, the scanner port/result, filesystem adapters, and their tests currently exist. The Maven artifact is `com.codeintel:code-intelligence`; `target/code-intelligence.jar` is currently a library and will become executable in the CLI stage.
 
 ```text
 CodebaseInspector/
@@ -174,7 +174,7 @@ Include overloaded methods, same-class calls, calls through fields and construct
 
 ## Implementation sequence and checkpoints
 
-Stages 1 and 2 were explicitly authorized. Later stages start only after an explicit user request. Each meaningful stage includes compilation, relevant tests, fixes, and a short progress report.
+Stages 1 through 3 were explicitly authorized and implemented. Later stages start only after an explicit user request. Each meaningful stage includes compilation, relevant tests, fixes, and a short progress report. Stage 3 package-based fallback inference is intentionally deferred until parsed package declarations exist in stage 4.
 
 1. Set up Java 21, Maven, pinned JavaParser/Symbol Solver and JUnit 5 dependencies, compiler/test plugins, and the agreed package boundaries. Verify an initial clean build.
 2. Implement immutable domain values and callable identity mapping rules, covering overloads, constructor identity, nested classes, unresolved fallback types, and collision diagnostics.
