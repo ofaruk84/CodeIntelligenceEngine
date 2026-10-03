@@ -65,10 +65,14 @@ class SyntheticFixtureTest {
                 assertEquals(u.path(), location.path());
                 assertEquals(location.startLine(), location.endLine());
                 assertEquals(call.rawExpression(), lines.get(location.startLine() - 1).substring(location.startColumn() - 1, location.endColumn()));
-                assertEquals(ResolutionStatus.UNRESOLVED, call.status());
-                assertTrue(call.target().isEmpty());
-                assertEquals("NOT_ATTEMPTED", call.failure().orElseThrow().category());
-                assertFalse(call.failure().orElseThrow().message().isBlank());
+                if (call.status() == ResolutionStatus.UNRESOLVED) {
+                    assertTrue(call.target().isEmpty());
+                    assertFalse(call.failure().orElseThrow().message().isBlank());
+                    assertNotEquals("NOT_ATTEMPTED", call.failure().orElseThrow().category());
+                } else {
+                    assertTrue(call.target().isPresent());
+                    assertTrue(call.failure().isEmpty());
+                }
                 assertTrue(u.types().stream().flatMap(t -> t.methods().stream()).anyMatch(m -> call.caller().filter(m.id()::equals).isPresent()));
             }
         }

@@ -2,7 +2,7 @@
 
 ## Status and inspection
 
-The original planning inspection on 2026-09-25 found an empty `C:\dev\LegacyCodebaseInspector`. The saved project is now `C:\dev\CodebaseInspector`. The user subsequently authorized build setup and stages 2 through 5 implementation. The Maven scaffold, immutable domain models, deterministic scanner, layout-based source-root discovery, first-pass AST extraction, and reusable synthetic fixture coverage are implemented. See [FIXTURES.md](FIXTURES.md), [AST_EXTRACTION.md](AST_EXTRACTION.md), [DOMAIN_MODEL.md](DOMAIN_MODEL.md) and [SCANNING.md](SCANNING.md) for decisions and verification. Explicit stage 5 authorization supersedes the planning-only wording in `AGENTS.md` for this scope; later stages still require authorization.
+The original planning inspection on 2026-09-25 found an empty `C:\dev\LegacyCodebaseInspector`. The saved project is now `C:\dev\CodebaseInspector`. The user subsequently authorized build setup and stages 2 through 6 implementation. The Maven scaffold, immutable domain models, deterministic scanner, layout-based source-root discovery, first-pass AST extraction, reusable synthetic fixture coverage, and second-pass static symbol resolution are implemented. See [SYMBOL_RESOLUTION.md](SYMBOL_RESOLUTION.md), [FIXTURES.md](FIXTURES.md), [AST_EXTRACTION.md](AST_EXTRACTION.md), [DOMAIN_MODEL.md](DOMAIN_MODEL.md) and [SCANNING.md](SCANNING.md) for decisions and verification. Explicit stage 6 authorization supersedes the planning-only wording in `AGENTS.md` for this scope; later stages still require authorization.
 
 ## Product and scope
 
@@ -174,7 +174,7 @@ Include overloaded methods, same-class calls, calls through fields and construct
 
 ## Implementation sequence and checkpoints
 
-Stages 1 through 5 were explicitly authorized and implemented. Later stages start only after an explicit user request. Each meaningful stage includes compilation, relevant tests, fixes, and a short progress report. Package-based fallback root inference remains deferred to resolution orchestration; stage 4 now supplies parsed package declarations.
+Stages 1 through 6 were explicitly authorized and implemented. Later stages start only after an explicit user request. Each meaningful stage includes compilation, relevant tests, fixes, and a short progress report. Stage 6 infers fallback roots from parsed packages when directory segments agree.
 
 1. Set up Java 21, Maven, pinned JavaParser/Symbol Solver and JUnit 5 dependencies, compiler/test plugins, and the agreed package boundaries. Verify an initial clean build.
 2. Implement immutable domain values and callable identity mapping rules, covering overloads, constructor identity, nested classes, unresolved fallback types, and collision diagnostics.
